@@ -1,4 +1,3 @@
-use argon2::password_hash;
 use sqlx::PgPool;
 use crate::models::user::{User, UserView, CreateUserRequest, UpdateUserRequest, DeleteUserRequest, AuthUserRequest, AuthUserResponse, UserQuery};
 use crate::utils::auth_util::{hash_password, verify_password, create_jwt, verify_jwt};
@@ -23,20 +22,6 @@ impl UserRepository {
             .bind(user.username)
             .bind(user.email)
             .bind(hashed_password)
-            .fetch_one(&self.pool)
-            .await
-    }
-
-    pub async fn get_by_id(&self, id: i64) -> Result<UserView, sqlx::Error> {
-        sqlx::query_as("SELECT id, name, email, created_at, updated_at FROM users WHERE id = $1")
-            .bind(id)
-            .fetch_one(&self.pool)
-            .await
-    }
-
-    pub async fn get_by_email(&self, email: &str) -> Result<UserView, sqlx::Error> {
-        sqlx::query_as("SELECT id, name, email, created_at, updated_at FROM users WHERE email = $1")
-            .bind(email)
             .fetch_one(&self.pool)
             .await
     }

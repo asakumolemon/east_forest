@@ -40,5 +40,13 @@ pub fn verify_jwt(token: &str) -> bool {
     };
     let validation = Validation::new(Algorithm::HS256);
     let token_data = decode::<Claims>(token, &DecodingKey::from_secret(jwt_config.secret.as_ref()), &validation);
-    token_data.is_ok()
+    if token_data.is_ok() {
+        if token_data.unwrap().claims.exp > chrono::Utc::now().timestamp() {
+            return true;
+        } else {
+            return false;
+        }
+    }else {
+        false
+    }
 }
