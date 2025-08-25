@@ -1,5 +1,7 @@
+use argon2::password_hash;
 use sqlx::PgPool;
 use crate::models::user::{User, UserView, CreateUserRequest, UpdateUserRequest, DeleteUserRequest, AuthUserRequest, AuthUserResponse, UserQuery};
+use crate::utils::auth_util::{hash_password, verify_password, create_jwt, verify_jwt};
 
 use crate::database::connection::create_pool;
 use crate::config::database_config::DatabaseConfig;
@@ -16,10 +18,11 @@ impl UserRepository {
     }
 
     pub async fn create(&self, user: CreateUserRequest) -> Result<User, sqlx::Error> {
+        let hashed_password = hash_password(&user.password);
         sqlx::query_as("INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at, updated_at")
             .bind(user.username)
             .bind(user.email)
-            .bind(user.password)
+            .bind(hashed_password)
             .fetch_one(&self.pool)
             .await
     }
@@ -39,10 +42,11 @@ impl UserRepository {
     }
 
     pub async fn update(&self, user: UpdateUserRequest) -> Result<User, sqlx::Error> {
-        sqlx::query_as("UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4 RETURNING id, name, email, created_at, updated_at")
-            .bind(user.username.unwrap())
-            .bind(user.email.unwrap())
-            .bind(user.password.unwrap())
+        let password_hash = hash_password(&user.password.unwrap_or("".to_string()));
+        sqlx::query_as("UPDATE users SET name = $1, email = $2, password_hash = $3 WHERE id = $4 RETURNING id, name, email, created_at, updated_at")
+            .bind(user.username.unwrap_or("".to_string()))
+            .bind(user.email.unwrap_or("".to_string()))
+            .bind(password_hash)
             .bind(user.id)
             .fetch_one(&self.pool)
             .await
@@ -62,15 +66,16 @@ impl UserRepository {
             .fetch_one(&self.pool)
             .await?;
         let password = user.password_hash;
-        if password != auth_user.password {
+        if !verify_password(&auth_user.password, &password) {
             return Err(sqlx::Error::RowNotFound);
         }else {
             return Ok(AuthUserResponse {
-                id: user.id,
+                id: user.id.to_string(),
                 username: user.username,
                 email: user.email,
                 avatar_url: user.avatar_url,
                 bio: user.bio,
+                token: create_jwt(user.id),
             });
         }
     }

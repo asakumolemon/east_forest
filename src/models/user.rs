@@ -60,6 +60,7 @@ pub struct AuthUserResponse {
     pub email: String,
     pub avatar_url: String,
     pub bio: String,
+    pub token: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
