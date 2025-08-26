@@ -18,6 +18,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     .service(web::resource("/user")
         .route(web::delete().to(delete_user))
         .route(web::put().to(update_user))
+        .route(web::get().to(get_user))
     );
 }
 
