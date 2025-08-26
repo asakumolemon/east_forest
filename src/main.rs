@@ -4,8 +4,8 @@ use east_forest::services::user_service::UserService;
 use east_forest::database::{self, repositories::UserRepository};
 
 
-struct AppState { 
-    user_service: UserService,
+pub struct AppState { 
+    pub user_service: UserService,
 }
 
 #[actix_web::main]
