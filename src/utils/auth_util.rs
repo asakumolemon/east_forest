@@ -24,7 +24,7 @@ pub fn verify_password(password: &str, hashed_password: &str) -> bool {
 
 pub fn create_jwt(user_id: String) -> String {
     let jwt_config = JwtConfig { 
-        secret: "secret".to_string(),
+        secret: "east_forest".to_string(),
     };  
     let claims = Claims { 
         sub: user_id,
@@ -36,7 +36,7 @@ pub fn create_jwt(user_id: String) -> String {
 
 pub fn verify_jwt(token: &str) -> bool {
     let jwt_config = JwtConfig { 
-        secret: "secret".to_string(),
+        secret: "east_forest".to_string(),
     };
     let validation = Validation::new(Algorithm::HS256);
     let token_data = decode::<Claims>(token, &DecodingKey::from_secret(jwt_config.secret.as_ref()), &validation);

@@ -43,8 +43,8 @@ impl Default for DatabaseConfig {
             host: dotenvy::var("DB_HOST").unwrap_or("localhost".to_string()),
             port: dotenvy::var("DB_PORT").unwrap_or("5432".to_string()).parse().unwrap(),
             username: dotenvy::var("DB_USERNAME").unwrap_or("postgres".to_string()),
-            password: dotenvy::var("DB_PASSWORD").unwrap_or("password".to_string()),
-            database: dotenvy::var("DB_DATABASE").unwrap_or("postgres".to_string()),
+            password: dotenvy::var("DB_PASSWORD").unwrap_or("123456".to_string()),
+            database: dotenvy::var("DB_DATABASE").unwrap_or("east_forest".to_string()),
             max_connections: dotenvy::var("DB_MAX_CONNECTIONS").unwrap_or("10".to_string()).parse().unwrap(),
             min_connections: dotenvy::var("DB_MIN_CONNECTIONS").unwrap_or("1".to_string()).parse().unwrap(),
             idle_timeout: std::time::Duration::from_secs(

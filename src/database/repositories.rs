@@ -1,6 +1,6 @@
 use sqlx::PgPool;
 use crate::models::user::{User, UserView, CreateUserRequest, UpdateUserRequest, DeleteUserRequest, AuthUserRequest, AuthUserResponse, UserQuery};
-use crate::utils::auth_util::{hash_password, verify_password, create_jwt, verify_jwt};
+use crate::utils::auth_util::{hash_password, verify_password, create_jwt};
 
 use crate::database::connection::create_pool;
 use crate::config::database_config::DatabaseConfig;
@@ -10,7 +10,8 @@ pub struct UserRepository {
 }
 
 impl UserRepository { 
-    pub async fn new(config: DatabaseConfig) -> Self {
+    pub async fn new() -> Self {
+        let config = DatabaseConfig::default();
         Self {
             pool: create_pool(config).await,
         }

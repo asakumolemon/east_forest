@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-sqlx = { version = "0.8.6", features = ["postgres"] }
+sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio"] }
 postgres = { version = "0.19", features = ["with-chrono-0_4"] }
 
 actix-web = "4.0"        # Web框架
