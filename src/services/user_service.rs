@@ -33,4 +33,8 @@ impl UserService {
         self.repository.get_all_users(user).await
     }
 
+    pub async fn get_user(&self, query: UserQuery) -> Result<UserView, sqlx::Error> { 
+        self.repository.get_user(query).await
+    }
+
 }

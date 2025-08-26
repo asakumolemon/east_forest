@@ -83,5 +83,12 @@ impl UserRepository {
         }).collect())
     }
 
+    pub async fn get_user(&self, query: UserQuery) -> Result<UserView, sqlx::Error> {
+        let user = sqlx::query_as("SELECT id, username, email, avatar_url, bio FROM users where id = $1")
+            .bind(query.id.unwrap_or("".to_string()))
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(user)
+    }
 
 }
