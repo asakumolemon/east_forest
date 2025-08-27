@@ -7,6 +7,7 @@ use crate::models::article::*;
 use crate::database::connection::create_pool;
 use crate::config::database_config::DatabaseConfig;
 
+#[derive(Clone)]
 pub struct UserRepository { 
     pool: PgPool,
 }

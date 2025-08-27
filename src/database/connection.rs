@@ -19,3 +19,9 @@ pub async fn create_pool(config: DatabaseConfig) -> Pool<Postgres> {
         })
         .expect("Failed to create database pool.")
 }
+
+#[tokio::test]
+async fn test_create_pool() {
+    let config = DatabaseConfig::default();
+    let pool = create_pool(config).await;
+}

@@ -26,3 +26,6 @@ reqwest = { version = "0.11", features = ["json"] } # HTTP客户端
 serde_json = "1.0"       # JSON处理
 serde = { version = "1.0.219", features = ["derive"] }
 chrono = { version = "0.4.41", features = ["serde"] }
+
+log = "0.4"
+env_logger = "0.10"

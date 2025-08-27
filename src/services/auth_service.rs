@@ -1,6 +1,7 @@
 use crate::database::{repositories::UserRepository};
 use crate::models::user::{AuthUserRequest, AuthUserResponse};
 
+#[derive(Clone)]
 pub struct AuthService { 
     pub repository: UserRepository,
 }
