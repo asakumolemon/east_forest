@@ -13,6 +13,7 @@ CREATE TABLE users (
 -- 题目表
 CREATE TABLE prompts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(200) NOT NULL,
     content TEXT NOT NULL,
     category VARCHAR(50) NOT NULL,
     difficulty_level INT DEFAULT 1,

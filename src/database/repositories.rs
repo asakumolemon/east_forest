@@ -18,11 +18,13 @@ impl UserRepository {
     }
 
     pub async fn create(&self, user: CreateUserRequest) -> Result<User, sqlx::Error> {
-        let hashed_password = hash_password(&user.password);
-        sqlx::query_as("INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at, updated_at")
-            .bind(user.username)
-            .bind(user.email)
+        let hashed_password = hash_password(&user.password.unwrap_or("".to_string()));
+        sqlx::query_as("INSERT INTO users (username, email, password_hash, avatar_url, bio) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, avatar_url, bio, created_at, updated_at")
+            .bind(user.username.unwrap_or("".to_string()))
+            .bind(user.email.unwrap_or("".to_string()))
             .bind(hashed_password)
+            .bind(user.avatar_url.unwrap_or("".to_string()))
+            .bind(user.bio.unwrap_or("".to_string()))
             .fetch_one(&self.pool)
             .await
     }
@@ -80,6 +82,8 @@ impl UserRepository {
             email: user.email,
             avatar_url: user.avatar_url,
             bio: user.bio,
+            created_at: user.created_at,
+            updated_at: user.updated_at
         }).collect())
     }
 
