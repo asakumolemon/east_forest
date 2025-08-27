@@ -8,7 +8,7 @@ pub struct Prompt{
     pub title: String,
     pub category: String,
     pub content: String,
-    pub difficulty_lecel: i32,
+    pub difficulty_level: i32,
     pub is_active: bool,
     pub display_date: DateTime<chrono::Utc>,
     pub created_at: DateTime<chrono::Utc>,

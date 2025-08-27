@@ -1,7 +1,8 @@
 use sqlx::PgPool;
 use crate::models::user::{User, UserView, CreateUserRequest, UpdateUserRequest, DeleteUserRequest, AuthUserRequest, AuthUserResponse, UserQuery};
 use crate::utils::auth_util::{hash_password, verify_password, create_jwt};
-use crate::models::prompt::*;
+use crate::models::{article, prompt::*};
+use crate::models::article::*;
 
 use crate::database::connection::create_pool;
 use crate::config::database_config::DatabaseConfig;
@@ -175,4 +176,78 @@ impl PromptRepository {
             .await?;
         Ok(prompt)
     }
+}
+
+pub struct ArticleRepository { 
+    pub pool: PgPool
+}
+
+impl ArticleRepository { 
+    pub async fn new() -> Self {
+        let config = DatabaseConfig::default();
+        Self {
+            pool: create_pool(config).await,
+        }
+    }
+
+    pub async fn create_article(&self, request: CreateArticleRequest) -> Result<ArticleView, sqlx::Error> { 
+        let article = sqlx::query_as::<_, ArticleView>("INSERT INTO articles (user_id, prompt_id, title, word_count, is_public, content, ai_score) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *")
+            .bind(request.user_id)
+            .bind(request.prompt_id)
+            .bind(request.title)
+            .bind(request.word_count)
+            .bind(request.is_public)
+            .bind(request.content)
+            .bind(request.ai_score)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(article)
+    }
+
+    pub async fn get_article(&self, query: ArticleQuery) -> Result<Vec<ArticleView>, sqlx::Error> {
+        let mut articles = sqlx::query_as::<_, ArticleView>("SELECT * FROM articles");
+        if let Some(id) = query.id { 
+            articles = articles.bind(id);
+        }
+        if let Some(user_id) = query.user_id {
+            articles = articles.bind(user_id);
+        }
+        if let Some(prompt_id) = query.prompt_id {
+            articles = articles.bind(prompt_id);
+        }
+        if let Some(title) = query.title {
+            articles = articles.bind(title);
+        }
+        if let Some(is_public) = query.is_public {
+            articles = articles.bind(is_public);
+        }
+        if let Some(ai_score) = query.ai_score {
+            articles = articles.bind(ai_score);
+        }
+        let articles = articles.fetch_all(&self.pool).await?;
+        Ok(articles)
+    }
+
+    pub async fn update_article(&self, request: UpdateArticleRequest) -> Result<ArticleView, sqlx::Error> {
+        let article = sqlx::query_as::<_, ArticleView>("UPDATE articles SET user_id = $1, prompt_id = $2, title = $3, word_count = $4, is_public = $5, content = $6, ai_score = $7 WHERE id = $8 RETURNING *")
+            .bind(request.user_id)
+            .bind(request.prompt_id)
+            .bind(request.title)
+            .bind(request.word_count)
+            .bind(request.is_public)
+            .bind(request.content)
+            .bind(request.ai_score)
+            .bind(request.id)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(article)
+    }
+
+    pub async fn delete_article(&self, request: DeleteArticleRequest) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM articles WHERE id = $1")
+            .bind(request.id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }    
 }
