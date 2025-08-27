@@ -1,7 +1,5 @@
-use sqlx::query;
-
 use crate::database::{repositories::UserRepository};
-use crate::models::user::{self, CreateUserRequest, DeleteUserRequest, UpdateUserRequest, User, UserQuery, UserView};
+use crate::models::user::{CreateUserRequest, DeleteUserRequest, UpdateUserRequest, User, UserQuery, UserView};
 
 pub struct UserService { 
     pub repository: UserRepository,

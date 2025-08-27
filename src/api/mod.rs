@@ -1,5 +1,6 @@
-use actix_web::{web, HttpResponse};
+use actix_web::{web};
 pub mod user_api;
+pub mod auth_api;
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(

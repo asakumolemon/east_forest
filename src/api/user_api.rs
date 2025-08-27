@@ -1,8 +1,6 @@
 use actix_web::{web, HttpResponse, Responder};
-use crate::services::user_service::{self, UserService};
-use crate::database::{self, repositories::UserRepository};
-use crate::models::user::{CreateUserRequest, UpdateUserRequest, DeleteUserRequest, AuthUserRequest, AuthUserResponse, UserQuery};
-use crate::utils::auth_util::verify_jwt;
+use crate::services::user_service::{UserService};
+use crate::models::user::{CreateUserRequest, UpdateUserRequest, DeleteUserRequest, UserQuery};
 
 pub struct UserApi { 
     pub service: UserService,
