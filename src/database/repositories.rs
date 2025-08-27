@@ -1,7 +1,7 @@
 use sqlx::PgPool;
 use crate::models::user::{User, UserView, CreateUserRequest, UpdateUserRequest, DeleteUserRequest, AuthUserRequest, AuthUserResponse, UserQuery};
 use crate::utils::auth_util::{hash_password, verify_password, create_jwt};
-use crate::models::{article, prompt::*};
+use crate::models::prompt::*;
 use crate::models::article::*;
 
 use crate::database::connection::create_pool;
