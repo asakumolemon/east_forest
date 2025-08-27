@@ -1,7 +1,9 @@
 use actix_web::{web, App, HttpServer};
 use east_forest::api::config;
+use east_forest::services::prompt_service::PromptService;
 use east_forest::services::user_service::UserService;
-use east_forest::database::{repositories::UserRepository};
+use east_forest::services::article_service::ArticleService;
+use east_forest::database::{repositories::PromptRepository, repositories::ArticleRepository, repositories::UserRepository};
 use east_forest::services::auth_service::AuthService;
 use std::sync::Arc;
 use east_forest::models::AppState;
@@ -11,7 +13,12 @@ async fn main() -> std::io::Result<()> {
     let user_repository = UserRepository::new().await;
     let user_service = Arc::new(UserService::new(user_repository.clone()));
     let auth_service = Arc::new(AuthService::new(user_repository));
-    let app_state = web::Data::new(AppState { user_service, auth_service });
+    let prompt_repository = PromptRepository::new().await;
+    let prompt_service = Arc::new(PromptService::new(prompt_repository));
+    let article_repository = ArticleRepository::new().await;
+    let article_service = Arc::new(ArticleService::new(article_repository));
+    
+    let app_state = web::Data::new(AppState { user_service, auth_service, prompt_service, article_service });
     
     let server = HttpServer::new(move || {
         App::new()

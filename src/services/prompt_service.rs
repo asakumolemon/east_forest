@@ -6,6 +6,10 @@ pub struct PromptService {
 }
 
 impl PromptService { 
+
+    pub fn new(prompt_repository: PromptRepository) -> Self { 
+        Self { prompt_repository }
+    }
     pub async fn create_prompt(&self, request: CreatePromptRequest) -> Result<PromptView, sqlx::Error> {
         let prompt = self.prompt_repository.create_prompt(request).await?;
         Ok(prompt)

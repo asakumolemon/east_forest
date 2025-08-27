@@ -1,6 +1,6 @@
 use actix_web::{web, HttpResponse};
 use crate::models::article::{ArticleQuery, CreateArticleRequest, DeleteArticleRequest, UpdateArticleRequest};
-use crate::services::article_service::ArticleService;
+use crate::models::AppState;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(web::scope("/articles")
@@ -13,10 +13,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 }
 
 async fn create_article(
-    article_service: web::Data<ArticleService>,
+    app_state: web::Data<AppState>,
     request: web::Json<CreateArticleRequest>,
 ) -> HttpResponse {
-    let article = article_service.create_article(request.into_inner()).await;
+    let article = app_state.article_service.create_article(request.into_inner()).await;
     match article {
         Ok(article) => HttpResponse::Ok().json(article),
         Err(_) => HttpResponse::InternalServerError().body("Internal server error"),
@@ -24,10 +24,10 @@ async fn create_article(
 }
 
 async fn get_article(
-    article_service: web::Data<ArticleService>,
+    app_state: web::Data<AppState>,
     request: web::Json<ArticleQuery>,
 ) -> HttpResponse {
-    let articles = article_service.get_article(request.into_inner()).await;
+    let articles = app_state.article_service.get_article(request.into_inner()).await;
     match articles {
         Ok(articles) => HttpResponse::Ok().json(articles),
         Err(_) => HttpResponse::InternalServerError().body("Internal server error"),
@@ -35,10 +35,10 @@ async fn get_article(
 }
 
 async fn update_article(
-    article_service: web::Data<ArticleService>, 
+    app_state: web::Data<AppState>, 
     request: web::Json<UpdateArticleRequest>,
 ) -> HttpResponse {
-    let article = article_service.update_article(request.into_inner()).await;
+    let article = app_state.article_service.update_article(request.into_inner()).await; 
     match article {
         Ok(article) => HttpResponse::Ok().json(article),
         Err(_) => HttpResponse::InternalServerError().body("Internal server error"),
@@ -46,10 +46,10 @@ async fn update_article(
 }
 
 async fn delete_article(
-    article_service: web::Data<ArticleService>, 
+    app_state: web::Data<AppState>, 
     request: web::Json<DeleteArticleRequest>,
 ) -> HttpResponse {
-    let article = article_service.delete_article(request.into_inner()).await;   
+    let article = app_state.article_service.delete_article(request.into_inner()).await;   
     match article {
         Ok(_) => HttpResponse::Ok().body("Delete success"),
         Err(_) => HttpResponse::InternalServerError().body("Delete failed"),
@@ -57,14 +57,19 @@ async fn delete_article(
 }
 
 async fn get_article_by_id(
-    article_service: web::Data<ArticleService>, 
+    app_state: web::Data<AppState>, 
     id: web::Path<String>,
 ) -> HttpResponse { 
     let query = ArticleQuery { id: Some(id.into_inner()), ..Default::default() };
-    let articles = article_service.get_article(query).await;
-    let article = articles.unwrap().get(0).cloned();
-    match article {
-        Some(article) => HttpResponse::Ok().json(article),
-        None => HttpResponse::InternalServerError().body("Internal server error"),
+    let articles = app_state.article_service.get_article(query).await;
+    match articles {
+        Ok(articles) => {
+            let article = articles.get(0).cloned();
+            match article {
+                Some(article) => HttpResponse::Ok().json(article),
+                None => HttpResponse::NotFound().body("Article not found"),
+            }
+        },
+        Err(_) => HttpResponse::InternalServerError().body("Internal server error"),
     }
 }
