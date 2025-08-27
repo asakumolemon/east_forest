@@ -28,9 +28,10 @@ pub struct PromptView {
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct CreatePromptRequest { 
+    pub title: Option<String>,
     pub category: Option<String>,
     pub content: Option<String>,
-    pub difficulty_lecel: Option<i32>,
+    pub difficulty_level: Option<i32>,
     pub is_active: Option<bool>,
     pub display_date: Option<DateTime<chrono::Utc>>,
 }
@@ -38,9 +39,10 @@ pub struct CreatePromptRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct UpdatePromptRequest {
     pub id: String,
+    pub title: Option<String>,
     pub category: Option<String>,
     pub content: Option<String>,
-    pub difficulty_lecel: Option<i32>,
+    pub difficulty_level: Option<i32>,
     pub is_active: Option<bool>,
     pub display_date: Option<DateTime<chrono::Utc>>,
 }

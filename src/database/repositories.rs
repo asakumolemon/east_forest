@@ -1,6 +1,7 @@
 use sqlx::PgPool;
 use crate::models::user::{User, UserView, CreateUserRequest, UpdateUserRequest, DeleteUserRequest, AuthUserRequest, AuthUserResponse, UserQuery};
 use crate::utils::auth_util::{hash_password, verify_password, create_jwt};
+use crate::models::prompt::*;
 
 use crate::database::connection::create_pool;
 use crate::config::database_config::DatabaseConfig;
@@ -70,12 +71,17 @@ impl UserRepository {
 
     pub async fn get_all_users(&self, query: UserQuery) -> Result<Vec<UserView>, sqlx::Error> { 
 
-        let users = sqlx::query_as("SELECT id, username, email, avatar_url, bio FROM users where username LIKE $1 or email LIKE $2 or id = $3")
-            .bind(format!("%{}%", query.username.unwrap_or("".to_string())))
-            .bind(format!("%{}%", query.email.unwrap_or("".to_string())))
-            .bind(query.id.unwrap_or("".to_string()))
-            .fetch_all(&self.pool)
-            .await?;
+        let mut users = sqlx::query_as("SELECT id, username, email, avatar_url, bio FROM users");
+        if let Some(id) = query.id { 
+            users = users.bind(id);
+        }
+        if let Some(username) = query.username {
+            users = users.bind(format!("{}%", username));
+        }
+        if let Some(email) = query.email {
+            users = users.bind(format!("{}%", email));
+        }
+        let users = users.fetch_all(&self.pool).await?;
         Ok(users.into_iter().map(|user: User| UserView {
             id: user.id,
             username: user.username,
@@ -95,4 +101,78 @@ impl UserRepository {
         Ok(user)
     }
 
+}
+
+
+pub struct PromptRepository { 
+    pool: PgPool,
+}
+
+impl PromptRepository { 
+    pub async fn new() -> Self {
+        let config = DatabaseConfig::default();
+        Self {
+            pool: create_pool(config).await,
+        }
+    }
+
+    pub async fn get_all(&self, query: PromptQuery) -> Result<Vec<PromptView>, sqlx::Error> { 
+        let mut prompts = sqlx::query_as::<_, PromptView>("SELECT * FROM prompts");
+        if let Some(id) = query.id {
+            prompts = prompts.bind(id);
+        }
+        if let Some(title) = query.title {
+            prompts = prompts.bind(format!("{}%", title));
+        }
+        if let Some(category) = query.category {
+            prompts = prompts.bind(format!("{}%", category));
+        }
+        if let Some(content) = query.content {
+            prompts = prompts.bind(format!("{}%", content));
+        }
+        if let Some(difficulty_level) = query.difficulty_lecel {
+            prompts = prompts.bind(difficulty_level);
+        }
+        let prompts = prompts.fetch_all(&self.pool).await?;
+        Ok(prompts)
+    }
+
+    pub async fn create_prompt(&self, request: CreatePromptRequest) -> Result<PromptView, sqlx::Error> { 
+        let prompt = sqlx::query_as::<_, PromptView>("INSERT INTO prompts (title, category, content, difficulty_level) VALUES ($1, $2, $3, $4) RETURNING id, title, category, content, difficulty_level, created_at, updated_at")
+            .bind(request.title.unwrap_or("".to_string()))
+            .bind(request.category.unwrap_or("".to_string()))
+            .bind(request.content.unwrap_or("".to_string()))
+            .bind(request.difficulty_level.unwrap_or(0))
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(prompt)
+    }
+
+    pub async fn update_prompt(&self, request: UpdatePromptRequest) -> Result<PromptView, sqlx::Error> { 
+        let prompt = sqlx::query_as::<_, PromptView>("UPDATE prompts SET title = $1, category = $2, content = $3, difficulty_level = $4 WHERE id = $5 RETURNING id, title, category, content, difficulty_level, created_at, updated_at")
+            .bind(request.title.unwrap_or("".to_string()))
+            .bind(request.category.unwrap_or("".to_string()))
+            .bind(request.content.unwrap_or("".to_string()))
+            .bind(request.difficulty_level.unwrap_or(0))
+            .bind(request.id)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(prompt)
+    }
+
+    pub async fn delete_prompt(&self, request: DeletePromptRequest) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM prompts WHERE id = $1")
+            .bind(request.id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_prompt(&self, query: PromptQuery) -> Result<PromptView, sqlx::Error> {
+        let prompt = sqlx::query_as::<_, PromptView>("SELECT * FROM prompts WHERE id = $1")
+            .bind(query.id.unwrap_or("".to_string()))
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(prompt)
+    }
 }
