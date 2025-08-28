@@ -3,6 +3,7 @@ use crate::models::user::{User, UserView, CreateUserRequest, UpdateUserRequest, 
 use crate::utils::auth_util::{hash_password, verify_password, create_jwt};
 use crate::models::prompt::*;
 use crate::models::article::*;
+use crate::models::comment::*;
 
 use crate::database::connection::create_pool;
 use crate::config::database_config::DatabaseConfig;
@@ -251,4 +252,60 @@ impl ArticleRepository {
             .await?;
         Ok(())
     }    
+}
+
+
+pub struct CommentRepository { 
+    pub pool: PgPool
+}
+
+impl CommentRepository { 
+    pub async fn new() -> Self {
+        let config = DatabaseConfig::default();
+        Self {
+            pool: create_pool(config).await,
+        }
+    }
+
+    pub async fn create_comment(&self, request: CreateCommentRequest) -> Result<CommentView, sqlx::Error> { 
+        let comment = sqlx::query_as::<_, CommentView>("INSERT INTO comments (article_id, user_id, content) VALUES ($1, $2, $3) RETURNING *")
+            .bind(request.article_id)
+            .bind(request.user_id)
+            .bind(request.content)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(comment)
+    }
+
+    pub async fn update_comment(&self, request: UpdateCommentRequest) -> Result<CommentView, sqlx::Error> { 
+        let comment = sqlx::query_as::<_, CommentView>("UPDATE comments SET content = $1 WHERE id = $2 RETURNING *")
+            .bind(request.content)
+            .bind(request.id)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(comment)
+    }
+
+    pub async fn delete_comment(&self, request: DeleteCommentRequest) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM comments WHERE id = $1")
+            .bind(request.id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_comment(&self, query: CommentQuery) -> Result<Vec<CommentView>, sqlx::Error> {
+        let mut comments = sqlx::query_as::<_, CommentView>("SELECT * FROM comments");
+        if let Some(article_id) = query.article_id {
+            comments = comments.bind(article_id);
+        }
+        if let Some(user_id) = query.user_id {
+            comments = comments.bind(user_id);
+        }
+        if let Some(content) = query.content {
+            comments = comments.bind(content);
+        }
+        let comments = comments.fetch_all(&self.pool).await?;
+        Ok(comments)
+    }
 }

@@ -23,5 +23,5 @@ pub async fn create_pool(config: DatabaseConfig) -> Pool<Postgres> {
 #[tokio::test]
 async fn test_create_pool() {
     let config = DatabaseConfig::default();
-    let pool = create_pool(config).await;
+    let _ = create_pool(config).await;
 }
