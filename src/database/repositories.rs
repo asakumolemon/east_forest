@@ -1,9 +1,10 @@
 use sqlx::PgPool;
-use crate::models::user::{User, UserView, CreateUserRequest, UpdateUserRequest, DeleteUserRequest, AuthUserRequest, AuthUserResponse, UserQuery};
+use crate::models::user::*;
 use crate::utils::auth_util::{hash_password, verify_password, create_jwt};
 use crate::models::prompt::*;
 use crate::models::article::*;
 use crate::models::comment::*;
+use crate::models::user_interaction::*;
 
 use crate::database::connection::create_pool;
 use crate::config::database_config::DatabaseConfig;
@@ -307,5 +308,61 @@ impl CommentRepository {
         }
         let comments = comments.fetch_all(&self.pool).await?;
         Ok(comments)
+    }
+}
+
+pub struct UserInteractionRepository { 
+    pool: PgPool
+}
+
+impl UserInteractionRepository { 
+    pub async fn new() -> Self {
+        let config = DatabaseConfig::default();
+        Self {
+            pool: create_pool(config).await,
+        }
+    }
+
+    pub async fn create_user_interaction(&self, request: CreateUserInteractionRequest) -> Result<UserInteractionView, sqlx::Error> { 
+        let user_interaction = sqlx::query_as::<_, UserInteractionView>(
+            "INSERT INTO user_interactions (user_id, prompt_id, article_id, comment_id, interaction_type) VALUES ($1, $2, $3, $4, $5) RETURNING *"
+        )
+        .bind(request.user_id)
+        .bind(request.prompt_id)
+        .bind(request.article_id)
+        .bind(request.comment_id)
+        .bind(request.interaction_type)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(user_interaction)
+    }
+
+    pub async fn get_user_interaction(&self, query: UserInteractionQuery) -> Result<Vec<UserInteractionView>, sqlx::Error> {
+        let mut user_interactions = sqlx::query_as::<_, UserInteractionView>("SELECT * FROM user_interactions");
+        if let Some(user_id) = query.user_id {
+            user_interactions = user_interactions.bind(user_id);
+        }
+        if let Some(prompt_id) = query.prompt_id {
+            user_interactions = user_interactions.bind(prompt_id);
+        }
+        if let Some(article_id) = query.article_id {
+            user_interactions = user_interactions.bind(article_id);
+        }
+        if let Some(comment_id) = query.comment_id {
+            user_interactions = user_interactions.bind(comment_id);
+        }
+        if let Some(interaction_type) = query.interaction_type {
+            user_interactions = user_interactions.bind(interaction_type);
+        }
+        let user_interactions = user_interactions.fetch_all(&self.pool).await?;
+        Ok(user_interactions)
+    }
+
+    pub async fn delete_user_interaction(&self, request: DeleteUserInteractionRequest) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM user_interactions WHERE id = $1")
+            .bind(request.id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 }

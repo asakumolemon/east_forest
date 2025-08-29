@@ -2,14 +2,16 @@ pub mod user;
 pub mod prompt;
 pub mod article;
 pub mod comment;
-use crate::services::{user_service::UserService, auth_service::AuthService, prompt_service::PromptService, article_service::ArticleService, comment_service::CommentService};
+pub mod user_interaction;
+use crate::services::*;
 use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AppState { 
-    pub user_service: Arc<UserService>,
-    pub auth_service: Arc<AuthService>,
-    pub prompt_service: Arc<PromptService>,
-    pub article_service: Arc<ArticleService>,
-    pub comment_service: Arc<CommentService>,
+    pub user_service: Arc<user_service::UserService>,
+    pub auth_service: Arc<auth_service::AuthService>,
+    pub prompt_service: Arc<prompt_service::PromptService>,
+    pub article_service: Arc<article_service::ArticleService>,
+    pub comment_service: Arc<comment_service::CommentService>,
+    pub user_interaction_service: Arc<user_interaction_service::UserInteractionService>,
 }

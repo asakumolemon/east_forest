@@ -4,6 +4,7 @@ pub mod auth_api;
 pub mod prompt_api;
 pub mod article_api;
 pub mod comment_api;
+pub mod user_interaction_api;
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(
