@@ -14,3 +14,5 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             .configure(article_api::configure)
     );
 }
+
+// env_logger::init_from_env(Env::default().default_filter_or("info"));

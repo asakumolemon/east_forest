@@ -1,4 +1,5 @@
 use sqlx::PgPool;
+
 use crate::models::user::*;
 use crate::utils::auth_util::{hash_password, verify_password, create_jwt};
 use crate::models::prompt::*;
@@ -74,23 +75,47 @@ impl UserRepository {
     }
 
     pub async fn get_all_users(&self, query: UserQuery) -> Result<Vec<UserView>, sqlx::Error> { 
-
-        let mut users = sqlx::query_as::<_, UserView>("SELECT id, username, email, avatar_url, bio FROM users");
-        if let Some(id) = query.id { 
-            users = users.bind(id);
+        let mut where_conditions = Vec::new();
+        let mut bind_params = Vec::new();
+        let mut param_index = 1;
+    
+        if let Some(id) = &query.id {
+            where_conditions.push(format!("id LIKE ${}", param_index));
+            bind_params.push(format!("%{}%", id));
+            param_index += 1;
         }
-        if let Some(username) = query.username {
-            users = users.bind(format!("{}%", username));
+        
+        if let Some(username) = &query.username {
+            where_conditions.push(format!("username LIKE ${}", param_index));
+            bind_params.push(format!("%{}%", username));
+            param_index += 1;
         }
-        if let Some(email) = query.email {
-            users = users.bind(format!("{}%", email));
+        
+        if let Some(email) = &query.email {
+            where_conditions.push(format!("email LIKE ${}", param_index));
+            bind_params.push(format!("%{}%", email));
         }
-        let users = users.fetch_all(&self.pool).await?;
+    
+        let base_query = "SELECT id, username, email, avatar_url, bio, created_at, updated_at FROM users";
+        let full_query = if where_conditions.is_empty() {
+            base_query.to_string()
+        } else {
+            format!("{} WHERE {}", base_query, where_conditions.join(" OR "))
+        };
+    
+        let mut query_builder = sqlx::query_as::<_, UserView>(&full_query);
+        
+        for param in bind_params {
+            query_builder = query_builder.bind(param);
+        }
+    
+        let users = query_builder.fetch_all(&self.pool).await?;
+        
         Ok(users)
     }
 
     pub async fn get_user(&self, query: UserQuery) -> Result<UserView, sqlx::Error> {
-        let user = sqlx::query_as("SELECT id, username, email, avatar_url, bio FROM users where id = $1")
+        let user = sqlx::query_as("SELECT id, username, email, avatar_url, bio, created_at, updated_at FROM users where id = $1")
             .bind(query.id.unwrap_or("".to_string()))
             .fetch_one(&self.pool)
             .await?;
@@ -113,22 +138,42 @@ impl PromptRepository {
     }
 
     pub async fn get_all(&self, query: PromptQuery) -> Result<Vec<PromptView>, sqlx::Error> { 
-        let mut prompts = sqlx::query_as::<_, PromptView>("SELECT * FROM prompts");
-        if let Some(id) = query.id {
-            prompts = prompts.bind(id);
+        let mut sql = "SELECT * FROM prompts WHERE 1=1".to_string();
+        let mut conditions = Vec::new();
+        let mut param_count = 1;
+        
+        if query.id.is_some() {
+            sql.push_str(&format!(" AND id = ${}", param_count));
+            conditions.push(query.id);
+            param_count += 1;
         }
         if let Some(title) = query.title {
-            prompts = prompts.bind(format!("{}%", title));
+            sql.push_str(&format!(" AND title LIKE ${}", param_count));
+            conditions.push(Some(format!("{}%", title)));
+            param_count += 1;
         }
         if let Some(category) = query.category {
-            prompts = prompts.bind(format!("{}%", category));
+            sql.push_str(&format!(" AND category LIKE ${}", param_count));
+            conditions.push(Some(format!("{}%", category)));
+            param_count += 1;
         }
         if let Some(content) = query.content {
-            prompts = prompts.bind(format!("{}%", content));
+            sql.push_str(&format!(" AND content LIKE ${}", param_count));
+            conditions.push(Some(format!("{}%", content)));
+            param_count += 1;
         }
-        if let Some(difficulty_level) = query.difficulty_lecel {
-            prompts = prompts.bind(difficulty_level);
+        if let Some(difficulty_level) = query.difficulty_level {
+            sql.push_str(&format!(" AND difficulty_level = ${}", param_count));
+            conditions.push(Some(difficulty_level.to_string()));
         }
+        
+        let mut prompts = sqlx::query_as::<_, PromptView>(&sql);
+        for condition in conditions {
+            if let Some(value) = condition {
+                prompts = prompts.bind(value);
+            }
+        }
+        
         let prompts = prompts.fetch_all(&self.pool).await?;
         Ok(prompts)
     }
@@ -200,8 +245,36 @@ impl ArticleRepository {
     }
 
     pub async fn get_article(&self, query: ArticleQuery) -> Result<Vec<ArticleView>, sqlx::Error> {
-        let mut articles = sqlx::query_as::<_, ArticleView>("SELECT * FROM articles");
-        if let Some(id) = query.id { 
+        let mut sql = "SELECT * FROM articles WHERE 1=1".to_string();
+        let mut param_count = 1;
+        
+        if query.id.is_some() {
+            sql.push_str(&format!(" AND id = ${}", param_count));
+            param_count += 1;
+        }
+        if query.user_id.is_some() {
+            sql.push_str(&format!(" AND user_id = ${}", param_count));
+            param_count += 1;
+        }
+        if query.prompt_id.is_some() {
+            sql.push_str(&format!(" AND prompt_id = ${}", param_count));
+            param_count += 1;
+        }
+        if query.title.is_some() {
+            sql.push_str(&format!(" AND title = ${}", param_count));
+            param_count += 1;
+        }
+        if query.is_public.is_some() {
+            sql.push_str(&format!(" AND is_public = ${}", param_count));
+            param_count += 1;
+        }
+        if query.ai_score.is_some() {
+            sql.push_str(&format!(" AND ai_score = ${}", param_count));
+        }
+        
+        let mut articles = sqlx::query_as::<_, ArticleView>(&sql);
+        
+        if let Some(id) = query.id {
             articles = articles.bind(id);
         }
         if let Some(user_id) = query.user_id {
@@ -219,6 +292,7 @@ impl ArticleRepository {
         if let Some(ai_score) = query.ai_score {
             articles = articles.bind(ai_score);
         }
+        
         let articles = articles.fetch_all(&self.pool).await?;
         Ok(articles)
     }
@@ -288,7 +362,28 @@ impl CommentRepository {
     }
 
     pub async fn get_comment(&self, query: CommentQuery) -> Result<Vec<CommentView>, sqlx::Error> {
-        let mut comments = sqlx::query_as::<_, CommentView>("SELECT * FROM comments");
+        let mut sql = "SELECT * FROM comments".to_string();
+        let mut conditions = Vec::new();
+        let mut param_count = 1;
+        
+        if query.article_id.is_some() {
+            conditions.push(format!("article_id = ${}", param_count));
+            param_count += 1;
+        }
+        if query.user_id.is_some() {
+            conditions.push(format!("user_id = ${}", param_count));
+            param_count += 1;
+        }
+        if query.content.is_some() {
+            conditions.push(format!("content = ${}", param_count));
+        }
+        
+        if !conditions.is_empty() {
+            sql.push_str(&format!(" WHERE {}", conditions.join(" AND ")));
+        }
+        
+        let mut comments = sqlx::query_as::<_, CommentView>(&sql);
+        
         if let Some(article_id) = query.article_id {
             comments = comments.bind(article_id);
         }
@@ -298,6 +393,7 @@ impl CommentRepository {
         if let Some(content) = query.content {
             comments = comments.bind(content);
         }
+        
         let comments = comments.fetch_all(&self.pool).await?;
         Ok(comments)
     }
@@ -330,7 +426,25 @@ impl UserInteractionRepository {
     }
 
     pub async fn get_user_interaction(&self, query: UserInteractionQuery) -> Result<Vec<UserInteractionView>, sqlx::Error> {
-        let mut user_interactions = sqlx::query_as::<_, UserInteractionView>("SELECT * FROM user_interactions");
+        let mut sql = "SELECT * FROM user_interactions WHERE 1 = 1".to_string();
+        if query.user_id.is_some() {
+            sql.push_str(" AND user_id = ?");
+        }
+        if query.prompt_id.is_some() {
+            sql.push_str(" AND prompt_id = ?");
+        }
+        if query.article_id.is_some() {
+            sql.push_str(" AND article_id = ?");
+        }
+        if query.comment_id.is_some() {
+            sql.push_str(" AND comment_id = ?");
+        }
+        if query.interaction_type.is_some() {
+            sql.push_str(" AND interaction_type = ?");
+        }
+        
+        let mut user_interactions = sqlx::query_as::<_, UserInteractionView>(&sql);
+        
         if let Some(user_id) = query.user_id {
             user_interactions = user_interactions.bind(user_id);
         }
@@ -346,6 +460,7 @@ impl UserInteractionRepository {
         if let Some(interaction_type) = query.interaction_type {
             user_interactions = user_interactions.bind(interaction_type);
         }
+        
         let user_interactions = user_interactions.fetch_all(&self.pool).await?;
         Ok(user_interactions)
     }

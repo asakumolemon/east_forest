@@ -9,6 +9,8 @@ use east_forest::services::auth_service::AuthService;
 use east_forest::services::user_interaction_service::UserInteractionService;
 use std::sync::Arc;
 use east_forest::models::AppState;
+use env_logger::Env;
+use actix_web::middleware::Logger; // 导入 Logger
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -35,16 +37,16 @@ async fn main() -> std::io::Result<()> {
         comment_service,
         user_interaction_service,
     });
-    
+
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
+    log::info!("Starting server at 0.0.0.0:18080");
     let server = HttpServer::new(move || {
         App::new()
             .app_data(app_state.clone())
+            .wrap(Logger::default()) // 添加这一行来启用请求日志
             .configure(config)
-            .wrap(actix_web::middleware::Logger::default())
     })
     .bind("127.0.0.1:18080")?;
-    
-    let addr = server.addrs();
-    println!("Server started at: {:?}", addr);
+
     server.run().await
 }

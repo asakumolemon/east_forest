@@ -58,5 +58,5 @@ pub struct PromptQuery {
     pub title: Option<String>,
     pub category: Option<String>,
     pub content: Option<String>,
-    pub difficulty_lecel: Option<i32>,
+    pub difficulty_level: Option<i32>,
 }
