@@ -75,7 +75,7 @@ impl UserRepository {
 
     pub async fn get_all_users(&self, query: UserQuery) -> Result<Vec<UserView>, sqlx::Error> { 
 
-        let mut users = sqlx::query_as("SELECT id, username, email, avatar_url, bio FROM users");
+        let mut users = sqlx::query_as::<_, UserView>("SELECT id, username, email, avatar_url, bio FROM users");
         if let Some(id) = query.id { 
             users = users.bind(id);
         }
@@ -86,15 +86,7 @@ impl UserRepository {
             users = users.bind(format!("{}%", email));
         }
         let users = users.fetch_all(&self.pool).await?;
-        Ok(users.into_iter().map(|user: User| UserView {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            avatar_url: user.avatar_url,
-            bio: user.bio,
-            created_at: user.created_at,
-            updated_at: user.updated_at
-        }).collect())
+        Ok(users)
     }
 
     pub async fn get_user(&self, query: UserQuery) -> Result<UserView, sqlx::Error> {
