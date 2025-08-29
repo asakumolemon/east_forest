@@ -9,15 +9,14 @@ pub struct UserApi {
 
 pub fn configure(cfg: &mut web::ServiceConfig) { 
     cfg
-    .service(
-        web::resource("/users")
-            .route(web::get().to(get_all_users))
-    )
+    .service(web::resource("/users")
+            .route(web::get().to(get_all_users)))
     .service(web::resource("/user")
-        .route(web::post().to(create_user))
         .route(web::delete().to(delete_user))
         .route(web::put().to(update_user))
         .route(web::get().to(get_user))
+    ).service(web::resource("/register")
+        .route(web::post().to(create_user))
     );
 }
 
