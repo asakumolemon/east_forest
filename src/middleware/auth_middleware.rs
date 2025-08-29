@@ -46,7 +46,8 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        if !req.path().starts_with("/api/v1/auth") || !req.path().starts_with("/api/v1/register") {
+        log::info!("{}",req.path());
+        if !req.path().starts_with("/api/v1/auth") && !req.path().starts_with("/api/v1/register") {
             let token = req.headers().get("Authorization");
             if token.is_none() {
                 return Box::pin(async move {
@@ -57,7 +58,7 @@ where
                 return Box::pin(async move {
                     Err(actix_web::error::ErrorUnauthorized("Invalid token"))
                 });
-            }      
+            }
         }
         
         let fut = self.service.call(req);

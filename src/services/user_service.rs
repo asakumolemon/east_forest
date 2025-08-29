@@ -1,5 +1,5 @@
 use crate::database::{repositories::UserRepository};
-use crate::models::user::{CreateUserRequest, DeleteUserRequest, UpdateUserRequest, User, UserQuery, UserView};
+use crate::models::user::{CreateUserRequest, DeleteUserRequest, UpdateUserRequest, UserQuery, UserView};
 
 #[derive(Clone)]
 pub struct UserService { 

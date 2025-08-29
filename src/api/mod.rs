@@ -12,6 +12,9 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             .configure(user_api::configure)
             .configure(prompt_api::configure)
             .configure(article_api::configure)
+            .configure(comment_api::configure)
+            .configure(user_interaction_api::configure)
+            .configure(auth_api::configure)
     );
 }
 
