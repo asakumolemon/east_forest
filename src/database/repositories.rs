@@ -58,7 +58,8 @@ impl UserRepository {
     }
 
     pub async fn auth(&self, auth_user: AuthUserRequest) -> Result<AuthUserResponse, sqlx::Error> { 
-        let user: User = sqlx::query_as("SELECT id, username, email, password_hash, avatar_url, bio FROM users WHERE username = $1")
+        let user: User = sqlx::query_as("SELECT id, username, email, password_hash, avatar_url, bio, created_at, updated_at FROM users 
+            WHERE username = $1")
             .bind(auth_user.username)
             .fetch_one(&self.pool)
             .await?;

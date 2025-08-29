@@ -44,7 +44,7 @@ async fn main() -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         App::new()
             .app_data(app_state.clone())
-            .wrap(Logger::default()) // 添加这一行来启用请求日志
+            .wrap(Logger::default())
             .configure(config)
             .wrap(AuthMiddleware)
     })
