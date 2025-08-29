@@ -46,7 +46,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(app_state.clone())
             .wrap(Logger::default())
             .configure(config)
-            .wrap(AuthMiddleware)
+            // .wrap(AuthMiddleware)
     })
     .bind("127.0.0.1:18080")?;
 
