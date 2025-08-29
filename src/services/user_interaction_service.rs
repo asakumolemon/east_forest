@@ -6,7 +6,7 @@ pub struct UserInteractionService {
 }
 
 impl UserInteractionService { 
-    pub async fn new(user_interaction_repository: UserInteractionRepository) -> Self {
+    pub fn new(user_interaction_repository: UserInteractionRepository) -> Self {
         Self {
             user_interaction_repository,
         }

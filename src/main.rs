@@ -3,9 +3,10 @@ use east_forest::api::config;
 use east_forest::services::prompt_service::PromptService;
 use east_forest::services::user_service::UserService;
 use east_forest::services::article_service::ArticleService;
-use east_forest::database::repositories::{CommentRepository, PromptRepository, UserRepository, ArticleRepository};
+use east_forest::database::repositories::*;
 use east_forest::services::comment_service::CommentService;
 use east_forest::services::auth_service::AuthService;
+use east_forest::services::user_interaction_service::UserInteractionService;
 use std::sync::Arc;
 use east_forest::models::AppState;
 
@@ -23,13 +24,16 @@ async fn main() -> std::io::Result<()> {
     
     let comment_repository = CommentRepository::new().await;
     let comment_service = Arc::new(CommentService::new(comment_repository));
+    let user_interaction_repository = UserInteractionRepository::new().await;
+    let user_interaction_service = Arc::new(UserInteractionService::new(user_interaction_repository));
 
     let app_state = web::Data::new(AppState { 
         user_service, 
         auth_service, 
         prompt_service, 
         article_service, 
-        comment_service 
+        comment_service,
+        user_interaction_service,
     });
     
     let server = HttpServer::new(move || {
