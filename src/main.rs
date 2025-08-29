@@ -48,7 +48,7 @@ async fn main() -> std::io::Result<()> {
             .configure(config)
             // .wrap(AuthMiddleware)
     })
-    .bind("127.0.0.1:18080")?;
+    .bind("0.0.0.0:18080")?;
 
     server.run().await
 }
