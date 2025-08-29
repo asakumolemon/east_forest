@@ -11,12 +11,12 @@ impl UserService {
         Self { repository }
     }
 
-    pub async fn create(&self, user: CreateUserRequest) -> Result<User, sqlx::Error> {
+    pub async fn create(&self, user: CreateUserRequest) -> Result<UserView, sqlx::Error> {
         let user = self.repository.create(user).await?;
         Ok(user)
     }
 
-    pub async fn update(&self, user: UpdateUserRequest) -> Result<User, sqlx::Error> {
+    pub async fn update(&self, user: UpdateUserRequest) -> Result<UserView, sqlx::Error> {
         self.repository.update(user).await
     }
 

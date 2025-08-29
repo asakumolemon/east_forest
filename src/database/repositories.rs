@@ -23,7 +23,7 @@ impl UserRepository {
         }
     }
 
-    pub async fn create(&self, user: CreateUserRequest) -> Result<User, sqlx::Error> {
+    pub async fn create(&self, user: CreateUserRequest) -> Result<UserView, sqlx::Error> {
         let hashed_password = hash_password(&user.password.unwrap_or("".to_string()));
         sqlx::query_as("INSERT INTO users (username, email, password_hash, avatar_url, bio) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, avatar_url, bio, created_at, updated_at")
             .bind(user.username.unwrap_or("".to_string()))
@@ -35,12 +35,15 @@ impl UserRepository {
             .await
     }
 
-    pub async fn update(&self, user: UpdateUserRequest) -> Result<User, sqlx::Error> {
+    pub async fn update(&self, user: UpdateUserRequest) -> Result<UserView, sqlx::Error> {
         let password_hash = hash_password(&user.password.unwrap_or("".to_string()));
-        sqlx::query_as("UPDATE users SET name = $1, email = $2, password_hash = $3 WHERE id = $4 RETURNING id, name, email, created_at, updated_at")
+        sqlx::query_as("UPDATE users SET username = $1, email = $2, password_hash = $3 , avatar_url = $4, bio = $5 
+            WHERE id = $6 RETURNING id, username, email, created_at, updated_at, avatar_url, bio")
             .bind(user.username.unwrap_or("".to_string()))
             .bind(user.email.unwrap_or("".to_string()))
             .bind(password_hash)
+            .bind(user.avatar_url.unwrap_or("".to_string()))
+            .bind(user.bio.unwrap_or("".to_string()))
             .bind(user.id)
             .fetch_one(&self.pool)
             .await
@@ -59,8 +62,8 @@ impl UserRepository {
             .bind(auth_user.username)
             .fetch_one(&self.pool)
             .await?;
-        let password = user.password_hash;
-        if !verify_password(&auth_user.password, &password) {
+        let password_hash = user.password_hash;
+        if !verify_password(&auth_user.password, &password_hash) {
             return Err(sqlx::Error::RowNotFound);
         }else {
             return Ok(AuthUserResponse {
@@ -261,7 +264,7 @@ impl ArticleRepository {
             param_count += 1;
         }
         if query.title.is_some() {
-            sql.push_str(&format!(" AND title = ${}", param_count));
+            sql.push_str(&format!(" AND title LIKE ${}", param_count));
             param_count += 1;
         }
         if query.is_public.is_some() {
@@ -284,7 +287,7 @@ impl ArticleRepository {
             articles = articles.bind(prompt_id);
         }
         if let Some(title) = query.title {
-            articles = articles.bind(title);
+            articles = articles.bind(format!("%{}%", title));
         }
         if let Some(is_public) = query.is_public {
             articles = articles.bind(is_public);

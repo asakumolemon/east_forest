@@ -22,10 +22,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 }
 
 async fn update_user(
-    path: web::Path<UpdateUserRequest>,
+    update_user: web::Json<UpdateUserRequest>,
     app_state: web::Data<AppState>,
 ) -> impl Responder { 
-    let user = app_state.user_service.update(path.into_inner()).await;
+    let user = app_state.user_service.update(update_user.into_inner()).await;
     match user {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(err) => HttpResponse::InternalServerError().body(format!("Error updating user: {:?}", err)),
@@ -33,10 +33,10 @@ async fn update_user(
 }
 
 async fn delete_user(
-    path: web::Path<DeleteUserRequest>,
+    delete_user: web::Json<DeleteUserRequest>,
     app_state: web::Data<AppState>,
 ) -> impl Responder { 
-    let user = app_state.user_service.delete(path.into_inner()).await;
+    let user = app_state.user_service.delete(delete_user.into_inner()).await;
     match user {
         Ok(_) => Ok(HttpResponse::NoContent().finish()),
         Err(err) => Err(actix_web::error::ErrorInternalServerError(err)),

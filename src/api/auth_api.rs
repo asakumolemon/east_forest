@@ -1,3 +1,4 @@
+use actix_web::cookie::Cookie;
 use actix_web::{web, HttpResponse};
 use crate::models::user::AuthUserRequest;
 use crate::services::auth_service::AuthService;
@@ -21,7 +22,13 @@ async fn auth(
     let auth_user_request = req.into_inner();
     let auth_user_response = app_state.auth_service.auth(auth_user_request).await;
     match auth_user_response {
-        Ok(auth_user_response) => HttpResponse::Ok().json(auth_user_response),
+        Ok(auth_user_response) => HttpResponse::Ok()
+            .insert_header(("Authorization", auth_user_response.token.clone()))
+            .cookie(Cookie::build("try", auth_user_response.token.clone())
+                .path("/")
+                .max_age(actix_web::cookie::time::Duration::seconds(60*60))
+                .finish())
+            .json(auth_user_response),
         Err(err) => HttpResponse::BadRequest().json(err.to_string()),
     }
 }
