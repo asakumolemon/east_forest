@@ -11,6 +11,7 @@ use std::sync::Arc;
 use east_forest::models::AppState;
 use env_logger::Env;
 use actix_web::middleware::Logger; // 导入 Logger
+use east_forest::middleware::auth_middleware::AuthMiddleware;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -45,6 +46,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(app_state.clone())
             .wrap(Logger::default()) // 添加这一行来启用请求日志
             .configure(config)
+            .wrap(AuthMiddleware)
     })
     .bind("127.0.0.1:18080")?;
 

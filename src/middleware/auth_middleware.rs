@@ -46,18 +46,20 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        // 在这里实现具体的中间件逻辑
-        let token = req.headers().get("Authorization");
-        if token.is_none() {
-            return Box::pin(async move {
-                Err(actix_web::error::ErrorUnauthorized("Authorization header is missing"))
-            });
+        if !req.path().starts_with("/api/v1/auth") || !req.path().starts_with("/api/v1/register") {
+            let token = req.headers().get("Authorization");
+            if token.is_none() {
+                return Box::pin(async move {
+                    Err(actix_web::error::ErrorUnauthorized("Authorization header is missing"))
+                });
+            }
+            if !verify_jwt(token.unwrap().to_str().unwrap()) {
+                return Box::pin(async move {
+                    Err(actix_web::error::ErrorUnauthorized("Invalid token"))
+                });
+            }      
         }
-        if !verify_jwt(token.unwrap().to_str().unwrap()) {
-            return Box::pin(async move {
-                Err(actix_web::error::ErrorUnauthorized("Invalid token"))
-            });
-        }      
+        
         let fut = self.service.call(req);
         
         Box::pin(async move {
