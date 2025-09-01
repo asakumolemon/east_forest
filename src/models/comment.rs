@@ -44,6 +44,8 @@ pub struct CommentView {
     pub id: String,
     pub article_id: String,
     pub user_id: String,
+    pub username: String,
+    pub avatar_url: String,
     pub content: String,
     pub likes: i32,
     pub created_at: DateTime<chrono::Utc>

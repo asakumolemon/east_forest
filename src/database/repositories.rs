@@ -366,7 +366,7 @@ impl CommentRepository {
     }
 
     pub async fn get_comment(&self, query: CommentQuery) -> Result<Vec<CommentView>, sqlx::Error> {
-        let mut sql = "SELECT * FROM comments".to_string();
+        let mut sql = "SELECT c.*, u.username, u.avatar_url FROM comments c JOIN users u ON c.user_id = u.id".to_string();
         let mut conditions = Vec::new();
         let mut param_count = 1;
         
